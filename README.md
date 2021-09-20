@@ -1,5 +1,7 @@
 # Toys
 
+![Badge](https://github.com/kmizu/toys/actions/workflows/build.yml/badge.svg)
+
 A toy programming language to learn how to design and implement programming languages.
 
 Toys is a simple and expression-oriented dynamically-typed programming language.
