@@ -31,3 +31,11 @@ Toys is a simple and expression-oriented dynamically-typed programming language.
 # Purpose
 
 Toys is designed for a feature article in [Web+DB PRESS](https://gihyo.jp/magazine/wdpress) Vol.125
+
+# Test
+
+Toys' interpreter can be tested using Maven below:
+
+```
+$ mvn test
+```
