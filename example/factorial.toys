@@ -1,12 +1,10 @@
 define factorial(n) {
   if(n < 2) {
-    return 1;
+    1;
   } else {
-    return n * factorial(n - 1);
+    n * factorial(n - 1);
   }
 }
-global n = 0;
 define main() {
-  n = factorial(5);
-  println(n);
+  factorial(5);
 }
