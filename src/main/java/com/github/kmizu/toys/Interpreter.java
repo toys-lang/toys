@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import static com.github.kmizu.toys.Values.*;
 
 public class Interpreter {
     private Ast.Environment variableEnvironment;
@@ -24,41 +25,41 @@ public class Interpreter {
         return new Ast.Environment(new HashMap<>(), next);
     }
 
-    public int getValue(String name) {
+    public Value getValue(String name) {
         return variableEnvironment.bindings().get(name);
     }
 
-    public int interpret(Ast.Expression expression) {
+    public Value interpret(Ast.Expression expression) {
         if(expression instanceof Ast.BinaryExpression binaryExpression) {
-            var lhs = interpret(binaryExpression.lhs());
-            var rhs = interpret(binaryExpression.rhs());
+            var lhs = interpret(binaryExpression.lhs()).asInt().value();
+            var rhs = interpret(binaryExpression.rhs()).asInt().value();
             return switch(binaryExpression.operator()) {
-                case ADD -> lhs + rhs;
-                case SUBTRACT -> lhs - rhs;
-                case MULTIPLY -> lhs * rhs;
-                case DIVIDE -> lhs / rhs;
-                case LESS_THAN -> lhs < rhs ? 1 : 0;
-                case LESS_OR_EQUAL -> lhs <= rhs ? 1 : 0;
-                case GREATER_THAN -> lhs > rhs ? 1 : 0;
-                case GREATER_OR_EQUAL -> lhs >= rhs ? 1 : 0;
-                case EQUAL_EQUAL -> lhs == rhs ? 1 : 0;
-                case NOT_EQUAL -> lhs != rhs ? 1 : 0;
+                case ADD -> wrap(lhs + rhs);
+                case SUBTRACT -> wrap(lhs - rhs);
+                case MULTIPLY -> wrap(lhs * rhs);
+                case DIVIDE -> wrap(lhs / rhs);
+                case LESS_THAN -> wrap(lhs < rhs);
+                case LESS_OR_EQUAL -> wrap(lhs <= rhs);
+                case GREATER_THAN -> wrap(lhs > rhs);
+                case GREATER_OR_EQUAL -> wrap(lhs >= rhs);
+                case EQUAL_EQUAL -> wrap(lhs == rhs);
+                case NOT_EQUAL -> wrap(lhs != rhs);
             };
         } else if (expression instanceof Ast.IntegerLiteral integerLiteral){
-            return integerLiteral.value();
+            return wrap(integerLiteral.value());
         } else if (expression instanceof Ast.SymbolExpression symbolExpression) {
             var bindingsOpt = variableEnvironment.findBinding(symbolExpression.name());
             return bindingsOpt.get().get(symbolExpression.name());
         } else if (expression instanceof Ast.FunctionCall functionCall) {
             var definition = functionEnvironment.get(functionCall.name());
             if(definition == null) {
-                throw new RuntimeException("Function " + functionCall.name() + " is not found");
+                throw new LanguageException("Function " + functionCall.name() + " is not found");
             }
 
             var actualParams = functionCall.args();
             var formalParams= definition.args();
             var body = definition.body();
-            var values = actualParams.stream().map(a -> interpret(a)).collect(Collectors.toList());
+            var values = actualParams.stream().map(this::interpret).collect(Collectors.toList());
             var backup = variableEnvironment;
             variableEnvironment = newEnvironment(Optional.of(variableEnvironment));
             int i = 0;
@@ -71,7 +72,7 @@ public class Interpreter {
             return result;
         }else if(expression instanceof Ast.Assignment assignment) {
             var bindingsOpt= variableEnvironment.findBinding(assignment.name());
-            int value = interpret(assignment.expression());
+            Value value = interpret(assignment.expression());
             if(bindingsOpt.isPresent()) {
                 bindingsOpt.get().put(assignment.name(), value);
             } else {
@@ -79,7 +80,7 @@ public class Interpreter {
             }
             return value;
         } else if (expression instanceof Ast.BlockExpression block) {
-            int value = 0;
+            Value value = null;
             for(var e : block.elements()) {
                 value = interpret(e);
             }
@@ -87,23 +88,23 @@ public class Interpreter {
         } else if(expression instanceof Ast.Println println) {
             return interpret(println.arg());
         } else if(expression instanceof Ast.IfExpression ifExpression) {
-            int condition = interpret(ifExpression.condition());
-            if(condition != 0) {
+            boolean satisfied= interpret(ifExpression.condition()).asBool().value();
+            if(satisfied) {
                 return interpret(ifExpression.thenClause());
             } else {
                 var elseClauseOpt = ifExpression.elseClause();
-                return elseClauseOpt.map(this::interpret).orElse(1);
+                return elseClauseOpt.map(this::interpret).orElse(null);
             }
         } else if(expression instanceof Ast.WhileExpression whileExpression) {
             while (true) {
-                int condition = interpret(whileExpression.condition());
-                if (condition != 0) {
+                boolean satisfied = interpret(whileExpression.condition()).asBool().value();
+                if (satisfied) {
                     interpret(whileExpression.body());
                 } else {
                     break;
                 }
             }
-            return 1;
+            return wrap(true);
         } else if (expression instanceof Ast.LabelledCall labelledCall) {
             var definition = functionEnvironment.get(labelledCall.name());
             if (definition == null) {
@@ -120,7 +121,7 @@ public class Interpreter {
                 actualParams.add(mapping.get(param));
             }
             var body = definition.body();
-            var values = actualParams.stream().map(a -> interpret(a)).collect(Collectors.toList());
+            var values = actualParams.stream().map(this::interpret).collect(Collectors.toList());
             var backup = variableEnvironment;
             variableEnvironment = newEnvironment(Optional.of(variableEnvironment));
             int i = 0;
@@ -131,12 +132,17 @@ public class Interpreter {
             var result = interpret(body);
             variableEnvironment = backup;
             return result;
+        } else if(expression instanceof Ast.ArrayLiteral arrayLiteral) {
+            var items = arrayLiteral.items().stream().map(this::interpret).collect((Collectors.toList()));
+            return wrap(items);
+        } else if(expression instanceof Ast.BoolLiteral boolLiteral) {
+            return wrap(boolLiteral.value());
         } else {
             throw new RuntimeException("must not reach here");
         }
     }
 
-    public int callMain(Ast.Program program) {
+    public Value callMain(Ast.Program program) {
         var topLevels = program.definitions();
         for(var topLevel : topLevels) {
             if(topLevel instanceof Ast.GlobalVariableDefinition globalVariableDefinition) {

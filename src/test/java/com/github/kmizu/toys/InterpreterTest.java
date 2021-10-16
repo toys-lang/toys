@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.github.kmizu.toys.Ast.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.github.kmizu.toys.Values.*;
+import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class InterpreterTest {
@@ -63,7 +63,7 @@ public class InterpreterTest {
                                 )
                         )))
         );
-        int result = interpreter.callMain(new Ast.Program(topLevels));
+        var result = interpreter.callMain(new Ast.Program(topLevels)).asInt().value();
         assertEquals(120, result);
     }
 
@@ -71,22 +71,22 @@ public class InterpreterTest {
     public void testExpression() throws Exception {
         Expression tree;
         tree = Parsers.expression().parse(Input.of("(1+2)*3")).getResult();
-        assertEquals(9, interpreter.interpret(tree));
+        assertEquals(9, interpreter.interpret(tree).asInt().value());
         tree = Parsers.expression().parse(Input.of("1 + (2 * 3)")).getResult();
-        assertEquals(7, interpreter.interpret(tree));
+        assertEquals(7, interpreter.interpret(tree).asInt().value());
     }
 
     @Test
     public void testAssignment() throws Exception {
         Expression tree;
         tree = Parsers.line().parse(Input.of("a = 1 + 2;")).getResult();
-        int value;
+        Value value;
         value = interpreter.interpret(tree);
-        assertEquals(3, value);
+        assertEquals(3, value.asInt().value());
 
         tree = Parsers.line().parse(Input.of("a = a + 1;")).getResult();
         value = interpreter.interpret(tree);
-        assertEquals(4, value);
+        assertEquals(4, value.asInt().value());
     }
 
     @Test
@@ -98,9 +98,8 @@ public class InterpreterTest {
                 } else {
                    a = 0;
                 }""")).getResult();
-        int value;
-        value = interpreter.interpret(tree);
-        assertEquals(0, value);
+        var value = interpreter.interpret(tree);
+        assertEquals(0, value.asInt().value());
 
         tree = Parsers.ifExpression().parse(Input.of("""
                 if(1 >= 2) {
@@ -109,7 +108,7 @@ public class InterpreterTest {
                    b = 0;
                 }""")).getResult();
         value = interpreter.interpret(tree);
-        assertEquals(0, value);
+        assertEquals(0, value.asInt().value());
     }
 
     @Test
@@ -122,7 +121,7 @@ public class InterpreterTest {
         for (var statement : statements) {
             interpreter.interpret(statement);
         }
-        assertEquals(10, interpreter.getValue("i"));
+        assertEquals(10, interpreter.getValue("i").asInt().value());
     }
 
     @Test
@@ -135,8 +134,8 @@ public class InterpreterTest {
                 define main() {
                   v = add2(v);
                 }""")).getResult();
-        int value = interpreter.callMain(program);
-        assertEquals(4, value);
+        var value = interpreter.callMain(program);
+        assertEquals(4, value.asInt().value());
     }
 
     @Test
@@ -156,7 +155,7 @@ public class InterpreterTest {
                   println(n);
                 }""")).getResult();
         interpreter.callMain(program);
-        assertEquals(120, interpreter.getValue("n"));
+        assertEquals(120, interpreter.getValue("n").asInt().value());
     }
 
     @Test
@@ -168,7 +167,7 @@ public class InterpreterTest {
         for (var statement : statements) {
             interpreter.interpret(statement);
         }
-        assertEquals(11, interpreter.getValue("i"));
+        assertEquals(11, interpreter.getValue("i").asInt().value());
     }
 
     @Test
@@ -182,6 +181,29 @@ public class InterpreterTest {
                   power[n = 5];
                 }""")).getResult();
         var result = interpreter.callMain(program);
-        assertEquals(25, result);
+        assertEquals(25, result.asInt().value());
+    }
+
+    @Test
+    public void testArrayLiteral() throws Exception {
+        var expression = Parsers.expression().parse(Input.of("""
+                [1, 2, 3, 4, 5]
+                """)).getResult();
+        var result = interpreter.interpret(expression);
+        assertEquals(List.of(wrap(1), wrap(2), wrap(3), wrap(4), wrap(5)), result.asArray().values());
+    }
+
+    @Test
+    public void testTrueLiteral() throws Exception {
+        var expression = Parsers.expression().parse(Input.of("true")).getResult();
+        var result = interpreter.interpret(expression);
+        assertTrue(result.asBool().value());
+    }
+
+    @Test
+    public void testFalseLiteral() throws Exception {
+        var expression = Parsers.expression().parse(Input.of("false")).getResult();
+        var result = interpreter.interpret(expression);
+        assertFalse(result.asBool().value());
     }
 }

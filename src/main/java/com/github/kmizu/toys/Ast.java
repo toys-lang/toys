@@ -67,7 +67,7 @@ public class Ast {
 
     sealed public interface Expression permits
             BinaryExpression, IntegerLiteral, SymbolExpression, FunctionCall, Identifier,
-            BlockExpression, Assignment, WhileExpression, IfExpression, Println, LabelledCall {}
+            BlockExpression, Assignment, WhileExpression, IfExpression, Println, LabelledCall, ArrayLiteral, BoolLiteral {}
     public final static record BinaryExpression(Operator operator, Expression lhs, Expression rhs) implements Expression {}
     public final static record IntegerLiteral(int value) implements Expression {}
     public final static record SymbolExpression(String name) implements Expression {}
@@ -78,6 +78,8 @@ public class Ast {
     public final static record WhileExpression(Expression condition, Expression body) implements Expression {}
     public final static record IfExpression(Expression condition, Expression thenClause, Optional<Expression> elseClause) implements Expression {}
     public final static record Println(Expression arg) implements Expression {}
+    public final static record ArrayLiteral(List<Expression> items) implements Expression {}
+    public final static record BoolLiteral(boolean value) implements Expression {}
 
     sealed public interface TopLevel permits GlobalVariableDefinition, FunctionDefinition {}
     public final static record GlobalVariableDefinition(String name, Expression expression) implements TopLevel {}
@@ -85,8 +87,8 @@ public class Ast {
 
     public final static record Program(List<TopLevel> definitions) {}
 
-    public final static record Environment(Map<String, Integer> bindings, Optional<Environment> next) {
-        public Optional<Map<String, Integer>> findBinding(String name) {
+    public final static record Environment(Map<String, Values.Value> bindings, Optional<Environment> next) {
+        public Optional<Map<String, Values.Value>> findBinding(String name) {
             if(bindings.get(name) != null) return Optional.of(bindings);
             if(next.isPresent()) {
                 return next.get().findBinding(name);
