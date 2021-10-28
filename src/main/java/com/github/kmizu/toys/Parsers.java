@@ -31,6 +31,8 @@ public class Parsers {
     public static final Parser<Character, Unit> DEFINE = string("define").then(SPACINGS);
     public static final Parser<Character, Unit> RETURN = string("return").then(SPACINGS);
     public static final Parser<Character, Unit> PRINTLN = string("println").then(SPACINGS);
+    public static final Parser<Character, Unit> TRUE = string("true").then(SPACINGS);
+    public static final Parser<Character, Unit> FALSE = string("false").then(SPACINGS);
     public static final Parser<Character, Unit> COMMA = string(",").then(SPACINGS);
     public static final Parser<Character, Unit> LPAREN = string("(").then(SPACINGS);
     public static final Parser<Character, Unit> RPAREN = string(")").then(SPACINGS);
@@ -168,7 +170,7 @@ public class Parsers {
     public static Parser<Character, Ast.Expression> primary() {
         return LPAREN.bind(_1 ->
                 expression().bind(v ->
-                        RPAREN.map(_2 -> v))).or(integer).or(functionCall()).or(labelledCall()).or(identifier());
+                        RPAREN.map(_2 -> v))).or(integer).or(functionCall()).or(labelledCall()).or(arrayLiteral()).or(boolLiteral()).or(identifier());
     };
 
     public static Parser<Character, Ast.FunctionCall> functionCall() {
@@ -184,7 +186,19 @@ public class Parsers {
         ).attempt();
     }
 
-    public static Parser<Character, Ast.SymbolExpression> identifier() {
-        return IDENT.map(SymbolExpression::new);
+    public static Parser<Character, Identifier> identifier() {
+        return IDENT.map(Identifier::new);
+    }
+
+    public static Parser<Character, Ast.ArrayLiteral> arrayLiteral() {
+        return LBRACKET.bind(__1 ->
+                expression().sepBy(COMMA).bind(params ->
+                        RBRACKET.map(__2 -> new ArrayLiteral(params.toList()))
+                )
+        );
+    }
+
+    public static Parser<Character, Ast.BoolLiteral> boolLiteral() {
+        return TRUE.map(__ -> new BoolLiteral(true)).or(FALSE.map(__ -> new BoolLiteral(false)));
     }
 }

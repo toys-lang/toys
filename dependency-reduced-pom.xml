@@ -4,7 +4,7 @@
   <groupId>com.github.kmizu</groupId>
   <artifactId>toys</artifactId>
   <name>toys</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>A tiny toy programming language</description>
   <url>https://github.com/kmizu/toys</url>
   <developers>

@@ -36,8 +36,8 @@ public class Ast {
     public static BinaryExpression equalEqual(Expression lhs, Expression rhs) {
         return new BinaryExpression(Operator.EQUAL_EQUAL, lhs, rhs);
     }
-    public static SymbolExpression symbol(String name) {
-        return new SymbolExpression(name);
+    public static Identifier symbol(String name) {
+        return new Identifier(name);
     }
     public static FunctionCall call(String name, Expression... args) {
         return new FunctionCall(name, Arrays.asList(args));
@@ -66,18 +66,19 @@ public class Ast {
     }
 
     sealed public interface Expression permits
-            BinaryExpression, IntegerLiteral, SymbolExpression, FunctionCall, Identifier,
-            BlockExpression, Assignment, WhileExpression, IfExpression, Println, LabelledCall {}
+            BinaryExpression, IntegerLiteral, FunctionCall, Identifier,
+            BlockExpression, Assignment, WhileExpression, IfExpression, Println, LabelledCall, ArrayLiteral, BoolLiteral {}
     public final static record BinaryExpression(Operator operator, Expression lhs, Expression rhs) implements Expression {}
     public final static record IntegerLiteral(int value) implements Expression {}
-    public final static record SymbolExpression(String name) implements Expression {}
-    public final static record FunctionCall(String name, List<Expression> args) implements Expression {}
     public final static record Identifier(String name) implements Expression {}
+    public final static record FunctionCall(String name, List<Expression> args) implements Expression {}
     public final static record BlockExpression(List<Expression> elements) implements Expression {}
     public final static record Assignment(String name, Expression expression) implements Expression {}
     public final static record WhileExpression(Expression condition, Expression body) implements Expression {}
     public final static record IfExpression(Expression condition, Expression thenClause, Optional<Expression> elseClause) implements Expression {}
     public final static record Println(Expression arg) implements Expression {}
+    public final static record ArrayLiteral(List<Expression> items) implements Expression {}
+    public final static record BoolLiteral(boolean value) implements Expression {}
 
     sealed public interface TopLevel permits GlobalVariableDefinition, FunctionDefinition {}
     public final static record GlobalVariableDefinition(String name, Expression expression) implements TopLevel {}
@@ -85,8 +86,8 @@ public class Ast {
 
     public final static record Program(List<TopLevel> definitions) {}
 
-    public final static record Environment(Map<String, Integer> bindings, Optional<Environment> next) {
-        public Optional<Map<String, Integer>> findBinding(String name) {
+    public final static record Environment(Map<String, Values.Value> bindings, Optional<Environment> next) {
+        public Optional<Map<String, Values.Value>> findBinding(String name) {
             if(bindings.get(name) != null) return Optional.of(bindings);
             if(next.isPresent()) {
                 return next.get().findBinding(name);
