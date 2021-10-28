@@ -6,7 +6,7 @@
 
     <groupId>com.github.kmizu</groupId>
     <artifactId>toys</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2</version>
     <name>toys</name>
 
     <licenses>
