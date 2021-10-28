@@ -186,8 +186,8 @@ public class Parsers {
         ).attempt();
     }
 
-    public static Parser<Character, Ast.SymbolExpression> identifier() {
-        return IDENT.map(SymbolExpression::new);
+    public static Parser<Character, Identifier> identifier() {
+        return IDENT.map(Identifier::new);
     }
 
     public static Parser<Character, Ast.ArrayLiteral> arrayLiteral() {

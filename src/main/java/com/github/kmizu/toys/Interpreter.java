@@ -47,9 +47,9 @@ public class Interpreter {
             };
         } else if (expression instanceof Ast.IntegerLiteral integerLiteral){
             return wrap(integerLiteral.value());
-        } else if (expression instanceof Ast.SymbolExpression symbolExpression) {
-            var bindingsOpt = variableEnvironment.findBinding(symbolExpression.name());
-            return bindingsOpt.get().get(symbolExpression.name());
+        } else if (expression instanceof Ast.Identifier identifier) {
+            var bindingsOpt = variableEnvironment.findBinding(identifier.name());
+            return bindingsOpt.get().get(identifier.name());
         } else if (expression instanceof Ast.FunctionCall functionCall) {
             var definition = functionEnvironment.get(functionCall.name());
             if(definition == null) {

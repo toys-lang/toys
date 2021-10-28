@@ -36,8 +36,8 @@ public class Ast {
     public static BinaryExpression equalEqual(Expression lhs, Expression rhs) {
         return new BinaryExpression(Operator.EQUAL_EQUAL, lhs, rhs);
     }
-    public static SymbolExpression symbol(String name) {
-        return new SymbolExpression(name);
+    public static Identifier symbol(String name) {
+        return new Identifier(name);
     }
     public static FunctionCall call(String name, Expression... args) {
         return new FunctionCall(name, Arrays.asList(args));
@@ -66,13 +66,12 @@ public class Ast {
     }
 
     sealed public interface Expression permits
-            BinaryExpression, IntegerLiteral, SymbolExpression, FunctionCall, Identifier,
+            BinaryExpression, IntegerLiteral, FunctionCall, Identifier,
             BlockExpression, Assignment, WhileExpression, IfExpression, Println, LabelledCall, ArrayLiteral, BoolLiteral {}
     public final static record BinaryExpression(Operator operator, Expression lhs, Expression rhs) implements Expression {}
     public final static record IntegerLiteral(int value) implements Expression {}
-    public final static record SymbolExpression(String name) implements Expression {}
-    public final static record FunctionCall(String name, List<Expression> args) implements Expression {}
     public final static record Identifier(String name) implements Expression {}
+    public final static record FunctionCall(String name, List<Expression> args) implements Expression {}
     public final static record BlockExpression(List<Expression> elements) implements Expression {}
     public final static record Assignment(String name, Expression expression) implements Expression {}
     public final static record WhileExpression(Expression condition, Expression body) implements Expression {}
